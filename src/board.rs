@@ -62,7 +62,13 @@ impl Board {
 
     #[inline(always)]
     pub fn empty_mask(&self) -> u16 {
-        todo!("To be implemented")
+        let mut mask = 0u16;
+        for i in 0..16 {
+            if self.get_by_index(i) == 0 {
+                mask = mask | (1 << (15 - i));
+            }
+        }
+        mask
     }
 
     pub fn is_game_over(&self) -> bool {
@@ -151,5 +157,26 @@ mod tests {
 
             assert_eq!(board.get_by_index(i), 128);
         }
+    }
+
+    #[test]
+    fn test_empty_mask_emtpy_board() {
+        let board = Board::new(0);
+        assert_eq!(board.empty_mask(), 0xFFFF);
+    }
+
+    #[test]
+    fn test_empty_mask_full_board() {
+        let board = Board::new(0xFFFF_FFFF_FFFF_FFFF);
+        assert_eq!(board.empty_mask(), 0);
+    }
+
+    #[test]
+    fn test_empty_mask_some_filled() {
+        let board = Board::new(0)
+            .with_tile_by_index(0, 1)
+            .with_tile_by_index(5, 3);
+        let mask = board.empty_mask();
+        assert_eq!(mask, 0b0111_1011_1111_1111);
     }
 }

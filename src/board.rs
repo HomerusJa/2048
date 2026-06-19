@@ -8,7 +8,11 @@ pub enum Direction {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Board {
-    board: u64, // 16 fields, 4 bits each
+    /// 16 fields, 4 bits each, with the exponent of the tile (0 for empty, 1 for 2, 2 for 4, etc.)
+    ///
+    /// (0,0) is stored in the least significant 4 bits, (3,3) in the most significant 4 bits.
+    /// This means that a position (x,y) is stored at bit index `4*(x+y*4)` to `4*(x+y*4)+3`.
+    board: u64,
 }
 
 impl Board {
@@ -18,13 +22,9 @@ impl Board {
         }
     }
 
-    pub fn as_u64(&self) -> u64 {
-        self.board
-    }
-
     pub fn get(&self, x: u8, y: u8) -> u32 {
         assert!(x < 4 && y < 4, "Coordinates out of bounds");
-        self.get_by_index(x + y*4)
+        self.get_by_index(x + y * 4)
     }
 
     #[inline(always)]
@@ -37,16 +37,16 @@ impl Board {
 
     pub fn with_tile(&self, x: u8, y: u8, exponent: u8) -> Self {
         assert!(x < 4 && y < 4, "Coordinates out of bounds");
-        self.with_tile_by_index(x + y*4, exponent)
+        self.with_tile_by_index(x + y * 4, exponent)
     }
 
     #[inline(always)]
     pub fn with_tile_by_index(&self, i: u8, exponent: u8) -> Self {
         assert!(i < 16, "Index out of bounds");
-        let shift = i*4;
-        
+        let shift = i * 4;
+
         let mask = 0xFu64 << shift;
-        
+
         // First clear out the tile, then set it to the new value
         let new_board = (self.board & !mask) | ((exponent as u64) << shift);
         Board::new(new_board)
@@ -71,5 +71,85 @@ impl Board {
 
     pub fn max_tile(&self) -> (u8, u8) {
         todo!("To be implemented")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_empty_board() {
+        let board = Board::new(0);
+
+        for y in 0..4 {
+            for x in 0..4 {
+                assert_eq!(board.get(x, y), 0);
+            }
+        }
+    }
+
+    #[test]
+    fn test_single_tile() {
+        let board = Board::new(0).with_tile(0, 0, 1);
+
+        assert_eq!(board.get(0, 0), 2);
+
+        for y in 0..4 {
+            for x in 0..4 {
+                if (x, y) != (0, 0) {
+                    assert_eq!(board.get(x, y), 0);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_multiple_tiles() {
+        let board = Board::new(0)
+            .with_tile(0, 0, 1) // 2
+            .with_tile(1, 1, 2) // 4
+            .with_tile(2, 2, 3) // 8
+            .with_tile(3, 3, 4); // 16
+
+        assert_eq!(board.get(0, 0), 2);
+        assert_eq!(board.get(1, 1), 4);
+        assert_eq!(board.get(2, 2), 8);
+        assert_eq!(board.get(3, 3), 16);
+    }
+
+    #[test]
+    fn test_overwrite_tile() {
+        let board = Board::new(0).with_tile(2, 1, 1).with_tile(2, 1, 5);
+
+        assert_eq!(board.get(2, 1), 32);
+    }
+
+    #[test]
+    fn test_clear_tile() {
+        let board = Board::new(0).with_tile(1, 2, 4).with_tile(1, 2, 0);
+
+        assert_eq!(board.get(1, 2), 0);
+    }
+
+    #[test]
+    fn test_index_mapping() {
+        let board = Board::new(0)
+            .with_tile_by_index(0, 1)
+            .with_tile_by_index(5, 2)
+            .with_tile_by_index(15, 3);
+
+        assert_eq!(board.get(0, 0), 2);
+        assert_eq!(board.get(1, 1), 4);
+        assert_eq!(board.get(3, 3), 8);
+    }
+
+    #[test]
+    fn test_roundtrip_all_cells() {
+        for i in 0..16 {
+            let board = Board::new(0).with_tile_by_index(i, 7);
+
+            assert_eq!(board.get_by_index(i), 128);
+        }
     }
 }

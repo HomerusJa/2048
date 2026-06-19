@@ -75,8 +75,12 @@ impl Board {
         todo!("To be implemented")
     }
 
-    pub fn max_tile(&self) -> (u8, u8) {
-        todo!("To be implemented")
+    pub fn max_tile(&self) -> u32 {
+        let mut current = 0u32;
+        for i in 0..16 {
+            current = current.max(self.get_by_index(i));
+        }
+        current
     }
 }
 
@@ -178,5 +182,22 @@ mod tests {
             .with_tile_by_index(5, 3);
         let mask = board.empty_mask();
         assert_eq!(mask, 0b0111_1011_1111_1111);
+    }
+
+    #[test]
+    fn test_max_tile_empty_board() {
+        let board = Board::new(0);
+        assert_eq!(board.max_tile(), 0);
+    }
+
+    #[test]
+    fn test_max_tile_diverse_board() {
+        let board = Board::new(0)
+            .with_tile(1, 2, 3)
+            .with_tile(3, 0, 2)
+            .with_tile(0, 0, 5)
+            .with_tile(0, 1, 4);
+
+        assert_eq!(board.max_tile(), 32)
     }
 }

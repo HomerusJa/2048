@@ -35,8 +35,8 @@ pub fn invert_tiles(tiles: [u8; 4]) -> [u8; 4] {
 }
 
 pub struct RowSlideResult {
-    result_row: u16,
-    score: u32,
+    pub result_row: u16,
+    pub score: u32,
 }
 
 pub fn calculate_row_left_to_right_slide(row: u16) -> RowSlideResult {

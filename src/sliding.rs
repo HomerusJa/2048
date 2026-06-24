@@ -34,8 +34,14 @@ pub fn invert_tiles(tiles: [u8; 4]) -> [u8; 4] {
     [tiles[3], tiles[2], tiles[1], tiles[0]]
 }
 
-pub fn calculate_row_left_to_right_slide(row: u16) -> u16 {
+pub struct RowSlideResult {
+    result_row: u16,
+    score: u32,
+}
+
+pub fn calculate_row_left_to_right_slide(row: u16) -> RowSlideResult {
     let tiles = row_to_tiles(row);
+    let mut score: u32 = 0;
 
     // Compress non-zero tiles preserving their left-to-right order.
     let nonzeros: Vec<u8> = tiles.iter().cloned().filter(|&t| t != 0).collect();
@@ -49,6 +55,7 @@ pub fn calculate_row_left_to_right_slide(row: u16) -> u16 {
         if i > 0 && nonzeros[(i - 1) as usize] == cur {
             // As the current tile and the previous tile are equal, merge them into a single tile with exponent +1.
             merged.push(cur + 1);
+            score += 1 << (cur + 1); // Add the value of the merged tile to the score.
             // Skip the previous tile as it has been merged with the current tile.
             i -= 2;
         } else {
@@ -66,7 +73,10 @@ pub fn calculate_row_left_to_right_slide(row: u16) -> u16 {
         }
     }
 
-    tiles_to_row(result)
+    RowSlideResult {
+        result_row: tiles_to_row(result),
+        score,
+    }
 }
 
 #[cfg(test)]
@@ -143,7 +153,7 @@ mod tests {
     }
 
     #[test]
-    fn test_left_to_right_slide_some_cases() {
+    fn test_left_to_right_slide_only_slide() {
         let cases: Vec<([u8; 4], [u8; 4])> = vec![
             // basic sliding
             ([2, 0, 0, 0], [0, 0, 0, 2]),
@@ -173,11 +183,38 @@ mod tests {
 
         for (case, expected) in cases {
             let result = calculate_row_left_to_right_slide(tiles_to_row(case));
-            let result_tiles = row_to_tiles(result);
+            let result_tiles = row_to_tiles(result.result_row);
             assert_eq!(
                 result_tiles, expected,
                 "case: {:?} led to {:?}, when {:?} was expected",
                 case, result_tiles, expected
+            );
+        }
+    }
+
+    #[test]
+    fn test_left_to_right_slide_score() {
+        let cases: Vec<([u8; 4], u32)> = vec![
+            ([2, 0, 0, 0], 0),
+            ([0, 2, 0, 0], 0),
+            ([0, 0, 2, 0], 0),
+            ([0, 0, 0, 2], 0),
+            ([1, 0, 0, 1], 4),
+            ([1, 0, 1, 0], 4),
+            ([1, 1, 0, 0], 4),
+            ([2, 1, 1, 0], 4),
+            ([2, 1, 0, 1], 4),
+            ([2, 1, 1, 2], 4),
+            ([3, 3, 3, 3], 32),
+            ([1, 1, 4, 3], 4),
+        ];
+
+        for (case, expected_score) in cases {
+            let result = calculate_row_left_to_right_slide(tiles_to_row(case));
+            assert_eq!(
+                result.score, expected_score,
+                "case: {:?} led to score {:?}, when {:?} was expected",
+                case, result.score, expected_score
             );
         }
     }

@@ -22,11 +22,16 @@ impl Board {
         }
     }
 
+    /// Get the value of the tile at (x,y). (0,0) is the top-left corner, (3,3) is the bottom-right corner.
     pub fn get(&self, x: u8, y: u8) -> u32 {
         assert!(x < 4 && y < 4, "Coordinates out of bounds");
         self.get_by_index(x + y * 4)
     }
 
+    /// Get the value of the tile at index i (0-15). 0 is the top-left corner, 15 is the bottom-right corner.
+    /// We first go through each row, then the columns.
+    ///
+    /// So the order is: (0,0), (1,0), (2,0), (3,0), (0,1), (1,1), (2,1), (3,1), (0,2), (1,2), (2,2), (3,2), (0,3), (1,3), (2,3), (3,3).
     #[inline(always)]
     pub fn get_by_index(&self, i: u8) -> u32 {
         assert!(i < 16, "Index out of bounds");
@@ -35,11 +40,15 @@ impl Board {
         if exp == 0 { 0 } else { 1 << exp }
     }
 
+    /// Set the value of the tile at (x,y) to 2^exponent. (0,0) is the top-left corner, (3,3) is the bottom-right corner.
     pub fn with_tile(&self, x: u8, y: u8, exponent: u8) -> Self {
         assert!(x < 4 && y < 4, "Coordinates out of bounds");
         self.with_tile_by_index(x + y * 4, exponent)
     }
 
+    /// Set the value of the tile at index i (0-15) to 2^exponent. 0 is the top-left corner, 15 is the bottom-right corner.
+    ///
+    /// So the order is: (0,0), (1,0), (2,0), (3,0), (0,1), (1,1), (2,1), (3,1), (0,2), (1,2), (2,2), (3,2), (0,3), (1,3), (2,3), (3,3).
     #[inline(always)]
     pub fn with_tile_by_index(&self, i: u8, exponent: u8) -> Self {
         assert!(i < 16, "Index out of bounds");
@@ -52,14 +61,19 @@ impl Board {
         Board::new(new_board)
     }
 
+    /// Slide the board in the given direction. Returns None if the board does not change.
     pub fn slide(&self, direction: Direction) -> Option<Self> {
         todo!("To be implemented!")
     }
 
+    /// Slide the board in the given direction, returning the new board and the score gained from merging tiles.
+    /// Returns None if the board does not change.
     pub fn slide_with_score(&self, direction: Direction) -> Option<(Self, u32)> {
         todo!("To be implemented!")
     }
 
+    /// Returns a 16-bit mask where each bit corresponds to a tile on the board.
+    /// A bit is set to 1 if the corresponding tile is empty, and 0 if it is occupied.
     #[inline(always)]
     pub fn empty_mask(&self) -> u16 {
         let mut mask = 0u16;
@@ -71,10 +85,12 @@ impl Board {
         mask
     }
 
+    /// Returns true if the game is over (no more valid moves), false otherwise.
     pub fn is_game_over(&self) -> bool {
         todo!("To be implemented")
     }
 
+    /// Returns the maximum tile value on the board.
     pub fn max_tile(&self) -> u32 {
         let mut current = 0u32;
         for i in 0..16 {
@@ -199,5 +215,40 @@ mod tests {
             .with_tile(0, 1, 4);
 
         assert_eq!(board.max_tile(), 32)
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_basic_slide_with_score() {
+        let board = Board::new(0).with_tile(0, 0, 1).with_tile(1, 0, 1);
+
+        let (new_board, score) = board.slide_with_score(Direction::Right).unwrap();
+
+        let expected_board = Board::new(0).with_tile(3, 0, 2);
+        assert_eq!(new_board, expected_board);
+        assert_eq!(score, 2);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_slide_right_moves_row_into_place() {
+        let board = Board::new(0).with_tile(0, 2, 1).with_tile(2, 2, 2);
+
+        let new_board = board.slide(Direction::Right).unwrap();
+
+        let expected_board = Board::new(0).with_tile(2, 2, 1).with_tile(3, 2, 2);
+        assert_eq!(new_board, expected_board);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_slide_up_preserves_column_mapping() {
+        let board = Board::new(0).with_tile(1, 1, 1).with_tile(1, 3, 1);
+
+        let (new_board, score) = board.slide_with_score(Direction::Up).unwrap();
+
+        let expected_board = Board::new(0).with_tile(1, 0, 2);
+        assert_eq!(new_board, expected_board);
+        assert_eq!(score, 4);
     }
 }

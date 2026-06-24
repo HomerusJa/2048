@@ -1,0 +1,15 @@
+repos:
+# Pre commit stage
+- repo: https://github.com/FeryET/pre-commit-rust
+  rev: v1.2.1
+  hooks:
+    - id: fmt
+    - id: cargo-check
+
+
+# Pre push stage
+- repo: https://github.com/FeryET/pre-commit-rust
+  rev: v1.2.1
+  hooks:
+    - id: build
+    - id: test

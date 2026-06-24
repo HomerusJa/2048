@@ -1,4 +1,4 @@
-use rand::{RngExt};
+use rand::RngExt;
 
 use crate::board::{Board, Direction};
 

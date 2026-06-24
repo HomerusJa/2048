@@ -1,7 +1,7 @@
 /// Convert a row of the 2048 [crate::board::Board] to an array of 4 tiles, with the leftmost tile at index 0 and the rightmost tile at index 3.
-/// 
+///
 /// Note that the Board stores the tile (0,0) at the least significant bits, so the leftmost tile is stored in the least significant bits of the row.
-/// 
+///
 /// This is the inverse of [tiles_to_row].
 pub fn row_to_tiles(row: u16) -> [u8; 4] {
     [
@@ -13,7 +13,7 @@ pub fn row_to_tiles(row: u16) -> [u8; 4] {
 }
 
 /// Convert an array of 4 tiles to a row of the 2048 [crate::board::Board], with the leftmost tile at index 0 and the rightmost tile at index 3.
-/// 
+///
 /// This is the inverse of [row_to_tiles].
 pub fn tiles_to_row(tiles: [u8; 4]) -> u16 {
     ((tiles[0] as u16) << 0)
@@ -75,13 +75,7 @@ mod tests {
 
     #[test]
     fn test_row_tiles_row_conversion() {
-        let cases: Vec<u16> = vec![
-            0x1234,
-            0,
-            0xFFFF,
-            0x8000,
-            0x8001,
-        ];
+        let cases: Vec<u16> = vec![0x1234, 0, 0xFFFF, 0x8000, 0x8001];
 
         for case in cases {
             assert_eq!(tiles_to_row(row_to_tiles(case)), case)
@@ -156,7 +150,6 @@ mod tests {
             ([0, 2, 0, 0], [0, 0, 0, 2]),
             ([0, 0, 2, 0], [0, 0, 0, 2]),
             ([0, 0, 0, 2], [0, 0, 0, 2]),
-
             // multiple tiles
             ([2, 1, 0, 0], [0, 0, 2, 1]),
             ([2, 0, 1, 0], [0, 0, 2, 1]),
@@ -166,7 +159,6 @@ mod tests {
             ([1, 0, 3, 5], [0, 1, 3, 5]),
             ([0, 1, 3, 5], [0, 1, 3, 5]),
             ([5, 4, 3, 1], [5, 4, 3, 1]),
-            
             // with merging
             ([1, 0, 0, 1], [0, 0, 0, 2]),
             ([1, 0, 1, 0], [0, 0, 0, 2]),
@@ -182,7 +174,11 @@ mod tests {
         for (case, expected) in cases {
             let result = calculate_row_left_to_right_slide(tiles_to_row(case));
             let result_tiles = row_to_tiles(result);
-            assert_eq!(result_tiles, expected, "case: {:?} led to {:?}, when {:?} was expected", case, result_tiles, expected);
+            assert_eq!(
+                result_tiles, expected,
+                "case: {:?} led to {:?}, when {:?} was expected",
+                case, result_tiles, expected
+            );
         }
     }
 }
